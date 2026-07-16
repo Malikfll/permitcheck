@@ -1,0 +1,66 @@
+{
+  "application": {
+    "id": "APP-2026-0101",
+    "municipality": "Gatineau, QC",
+    "applicant": "Constructions Rivière-Nord inc.",
+    "submitted": "2026-06-15",
+    "legal_description": "Lot 4 512 337, cadastre du Québec",
+    "code": "NBC-2020",
+    "documents": [
+      {"name": "A-101 Site & Floor Plan", "type": "pdf"},
+      {"name": "A-201 Sections", "type": "pdf"},
+      {"name": "bungalow.ifc", "type": "ifc", "schema": "IFC4"}
+    ]
+  },
+  "building": {
+    "name": "Single-family bungalow",
+    "major_occupancy": "C",
+    "storeys": 1,
+    "building_area_m2": 168.0,
+    "dwelling_units": 1,
+    "has_secondary_suite": false,
+    "sprinklered": false,
+    "fuel_burning_appliance": true,
+    "attached_garage": true
+  },
+  "spaces": [
+    {"id": "S-01", "name": "Living room", "habitable": true, "is_bedroom": false,
+     "ceiling_height_m": {"value": 2.44, "confidence": 0.97, "source": "IFC space S-01 (bungalow.ifc)"}},
+    {"id": "S-02", "name": "Kitchen / dining", "habitable": true, "is_bedroom": false,
+     "ceiling_height_m": {"value": 2.44, "confidence": 0.97, "source": "IFC space S-02 (bungalow.ifc)"}},
+    {"id": "S-03", "name": "Bedroom 1", "habitable": true, "is_bedroom": true,
+     "ceiling_height_m": {"value": 2.44, "confidence": 0.97, "source": "IFC space S-03 (bungalow.ifc)"},
+     "egress_window": {
+       "open_area_m2": {"value": 0.48, "confidence": 0.95, "source": "Window schedule, A-101"},
+       "min_dimension_mm": {"value": 550, "confidence": 0.95, "source": "Window schedule, A-101"}
+     }},
+    {"id": "S-04", "name": "Bedroom 2", "habitable": true, "is_bedroom": true,
+     "ceiling_height_m": {"value": 2.44, "confidence": 0.97, "source": "IFC space S-04 (bungalow.ifc)"},
+     "egress_window": {
+       "open_area_m2": {"value": 0.42, "confidence": 0.95, "source": "Window schedule, A-101"},
+       "min_dimension_mm": {"value": 520, "confidence": 0.95, "source": "Window schedule, A-101"}
+     }},
+    {"id": "S-05", "name": "Bathroom", "habitable": false, "is_bedroom": false,
+     "ceiling_height_m": 2.35}
+  ],
+  "stairs": [
+    {"id": "ST-1", "name": "Basement stair", "private": true,
+     "rise_mm": {"value": 187, "confidence": 0.93, "source": "A-201 stair detail"},
+     "run_mm": {"value": 260, "confidence": 0.93, "source": "A-201 stair detail"},
+     "width_mm": {"value": 910, "confidence": 0.93, "source": "A-201 stair detail"},
+     "headroom_mm": {"value": 2050, "confidence": 0.93, "source": "A-201 stair detail"}}
+  ],
+  "guards": [
+    {"id": "G-1", "name": "Rear deck guard",
+     "walking_surface_height_above_grade_mm": 1200,
+     "height_mm": {"value": 960, "confidence": 0.9, "source": "A-101 deck detail"}}
+  ],
+  "raised_surfaces": [
+    {"id": "RS-1", "name": "Rear deck", "height_above_adjacent_mm": 1200, "guard_provided": true}
+  ],
+  "fire_safety": {
+    "smoke_alarm_each_storey": true,
+    "smoke_alarm_each_bedroom": true,
+    "co_alarm_provided": true
+  }
+}

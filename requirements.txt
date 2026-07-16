@@ -1,0 +1,8 @@
+# Core engine, API, UI, reports, audit: Python 3.9+ standard library only.
+# The extras below enable the computer-vision / real-file extraction stack:
+opencv-python-headless>=4.8   # scanned-drawing analysis (Hough, refinement)
+numpy>=1.24                   # cv2 dependency
+ezdxf>=1.1                    # DXF geometry + DIMENSION entity measurement
+pdfplumber>=0.10              # real-world (compressed) PDF text extraction
+pytesseract>=0.3.10           # OCR of scanned forms/drawings (needs the Tesseract
+                              # binary: winget install UB-Mannheim.TesseractOCR)

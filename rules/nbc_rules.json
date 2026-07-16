@@ -1,0 +1,537 @@
+{
+  "@context": {
+    "schema_note": "Machine-readable, machine-executable compliance rules inspired by the RASE methodology (Requirement, Applicability, Selection, Exception). Every rule is fully deterministic: conditions are declarative {field, op, value} triples evaluated by the PermitCheck rules engine with no probabilistic component.",
+    "code_edition": {
+      "id": "NBC-2020",
+      "title": {
+        "en": "National Building Code of Canada 2020 (Division B)",
+        "fr": "Code national du bâtiment du Canada 2020 (division B)"
+      }
+    },
+    "ruleset_version": "1.0.0",
+    "units_note": "Fields ending in _m are metres, _mm millimetres, _m2 square metres."
+  },
+  "classification": {
+    "description": {
+      "en": "Deterministic typology classification: a building falls under Part 9 (housing and small buildings) when it has 3 storeys or fewer, a building area of 600 m2 or less, and a major occupancy of Group C, D, E, F2 or F3. Otherwise Part 3 applies.",
+      "fr": "Classification déterministe de la typologie : un bâtiment relève de la partie 9 (maisons et petits bâtiments) s'il compte au plus 3 étages, une aire de bâtiment d'au plus 600 m2 et un usage principal du groupe C, D, E, F2 ou F3. Sinon, la partie 3 s'applique."
+    },
+    "part9_conditions": [
+      {"field": "$.building.storeys", "op": "le", "value": 3},
+      {"field": "$.building.building_area_m2", "op": "le", "value": 600},
+      {"field": "$.building.major_occupancy", "op": "in", "value": ["C", "D", "E", "F2", "F3"]}
+    ],
+    "part9_subtypes": [
+      {
+        "subtype": "house",
+        "label": {"en": "House (single dwelling unit)", "fr": "Maison (un seul logement)"},
+        "when": [
+          {"field": "$.building.major_occupancy", "op": "eq", "value": "C"},
+          {"field": "$.building.dwelling_units", "op": "eq", "value": 1}
+        ]
+      },
+      {
+        "subtype": "house_with_secondary_suite",
+        "label": {"en": "House with a secondary suite", "fr": "Maison avec logement accessoire"},
+        "when": [
+          {"field": "$.building.major_occupancy", "op": "eq", "value": "C"},
+          {"field": "$.building.dwelling_units", "op": "eq", "value": 2},
+          {"field": "$.building.has_secondary_suite", "op": "is_true"}
+        ]
+      },
+      {
+        "subtype": "small_multi_dwelling",
+        "label": {"en": "Small building, multiple dwelling units", "fr": "Petit bâtiment, logements multiples"},
+        "when": [
+          {"field": "$.building.major_occupancy", "op": "eq", "value": "C"},
+          {"field": "$.building.dwelling_units", "op": "ge", "value": 2}
+        ]
+      },
+      {
+        "subtype": "small_non_residential",
+        "label": {"en": "Small non-residential building (Group D, E, F2, F3)", "fr": "Petit bâtiment non résidentiel (groupes D, E, F2, F3)"},
+        "when": [
+          {"field": "$.building.major_occupancy", "op": "in", "value": ["D", "E", "F2", "F3"]}
+        ]
+      }
+    ],
+    "nbc_3_2_2_table": {
+      "description": {
+        "en": "Simplified first-match decision table for NBC Subsection 3.2.2 building size and construction classification (prototype subset; the full table set 3.2.2.20-3.2.2.93 is a Phase-2 authoring task from the digitalized code).",
+        "fr": "Table de décision simplifiée (première correspondance) pour la sous-section 3.2.2 du CNB (sous-ensemble prototype; l'ensemble 3.2.2.20-3.2.2.93 sera numérisé en phase 2)."
+      },
+      "entries": [
+        {"group": "A2", "max_storeys": 2, "sprinklered": null, "article": "3.2.2.24",
+         "label": {"en": "Group A2, up to 2 storeys", "fr": "Groupe A2, au plus 2 étages"}},
+        {"group": "C", "max_storeys": 6, "sprinklered": true, "article": "3.2.2.50",
+         "label": {"en": "Group C, up to 6 storeys, sprinklered", "fr": "Groupe C, au plus 6 étages, giclé"}},
+        {"group": "C", "max_storeys": 3, "sprinklered": false, "article": "3.2.2.55",
+         "label": {"en": "Group C, up to 3 storeys", "fr": "Groupe C, au plus 3 étages"}},
+        {"group": "D", "max_storeys": 6, "sprinklered": true, "article": "3.2.2.58",
+         "label": {"en": "Group D, up to 6 storeys, sprinklered", "fr": "Groupe D, au plus 6 étages, giclé"}},
+        {"group": "D", "max_storeys": 3, "sprinklered": false, "article": "3.2.2.61",
+         "label": {"en": "Group D, up to 3 storeys", "fr": "Groupe D, au plus 3 étages"}},
+        {"group": "E", "max_storeys": 2, "sprinklered": null, "article": "3.2.2.66",
+         "label": {"en": "Group E, up to 2 storeys", "fr": "Groupe E, au plus 2 étages"}}
+      ]
+    }
+  },
+  "rules": [
+    {
+      "id": "R-9.5.3.1-CEILING",
+      "reference": "NBC 2020 Div. B, Sentence 9.5.3.1.(1)",
+      "part": 9,
+      "severity": "major",
+      "discipline": "architectural",
+      "title": {
+        "en": "Minimum ceiling height in habitable rooms",
+        "fr": "Hauteur minimale sous plafond des pièces habitables"
+      },
+      "requirement_text": {
+        "en": "Habitable rooms shall have a ceiling height of not less than 2.3 m.",
+        "fr": "Les pièces habitables doivent avoir une hauteur sous plafond d'au moins 2,3 m."
+      },
+      "scope": {"collection": "spaces", "filter": [{"field": "habitable", "op": "is_true"}]},
+      "applicability": [],
+      "exceptions": [],
+      "requirements": [
+        {
+          "field": "ceiling_height_m",
+          "op": "ge",
+          "value": 2.3,
+          "unit": "m",
+          "uncertainty_margin": 0.02,
+          "message": {
+            "en": "Ceiling height must be at least 2.3 m",
+            "fr": "La hauteur sous plafond doit être d'au moins 2,3 m"
+          }
+        }
+      ]
+    },
+    {
+      "id": "R-9.8.4.1-STAIR-RISE",
+      "reference": "NBC 2020 Div. B, Table 9.8.4.1",
+      "part": 9,
+      "severity": "major",
+      "discipline": "architectural",
+      "title": {
+        "en": "Stair riser height (private stairs)",
+        "fr": "Hauteur de contremarche (escaliers privés)"
+      },
+      "requirement_text": {
+        "en": "Rise of steps in private stairs shall be between 125 mm and 200 mm.",
+        "fr": "La hauteur de contremarche des escaliers privés doit être comprise entre 125 mm et 200 mm."
+      },
+      "scope": {"collection": "stairs", "filter": [{"field": "private", "op": "is_true"}]},
+      "applicability": [],
+      "exceptions": [],
+      "requirements": [
+        {
+          "field": "rise_mm",
+          "op": "ge",
+          "value": 125,
+          "unit": "mm",
+          "uncertainty_margin": 3,
+          "message": {"en": "Riser height must be at least 125 mm", "fr": "La contremarche doit mesurer au moins 125 mm"}
+        },
+        {
+          "field": "rise_mm",
+          "op": "le",
+          "value": 200,
+          "unit": "mm",
+          "uncertainty_margin": 3,
+          "message": {"en": "Riser height must not exceed 200 mm", "fr": "La contremarche ne doit pas dépasser 200 mm"}
+        }
+      ]
+    },
+    {
+      "id": "R-9.8.4.2-STAIR-RUN",
+      "reference": "NBC 2020 Div. B, Table 9.8.4.2",
+      "part": 9,
+      "severity": "major",
+      "discipline": "architectural",
+      "title": {
+        "en": "Stair tread run (private stairs)",
+        "fr": "Giron des marches (escaliers privés)"
+      },
+      "requirement_text": {
+        "en": "Run of treads in private stairs shall be not less than 255 mm.",
+        "fr": "Le giron des marches des escaliers privés doit être d'au moins 255 mm."
+      },
+      "scope": {"collection": "stairs", "filter": [{"field": "private", "op": "is_true"}]},
+      "applicability": [],
+      "exceptions": [],
+      "requirements": [
+        {
+          "field": "run_mm",
+          "op": "ge",
+          "value": 255,
+          "unit": "mm",
+          "uncertainty_margin": 3,
+          "message": {"en": "Tread run must be at least 255 mm", "fr": "Le giron doit mesurer au moins 255 mm"}
+        }
+      ]
+    },
+    {
+      "id": "R-9.8.2.1-STAIR-WIDTH",
+      "reference": "NBC 2020 Div. B, Article 9.8.2.1",
+      "part": 9,
+      "severity": "major",
+      "discipline": "architectural",
+      "title": {
+        "en": "Minimum stair width (private stairs)",
+        "fr": "Largeur minimale des escaliers (escaliers privés)"
+      },
+      "requirement_text": {
+        "en": "Private stairs shall have a clear width of not less than 860 mm.",
+        "fr": "Les escaliers privés doivent avoir une largeur libre d'au moins 860 mm."
+      },
+      "scope": {"collection": "stairs", "filter": [{"field": "private", "op": "is_true"}]},
+      "applicability": [],
+      "exceptions": [],
+      "requirements": [
+        {
+          "field": "width_mm",
+          "op": "ge",
+          "value": 860,
+          "unit": "mm",
+          "uncertainty_margin": 5,
+          "message": {"en": "Stair width must be at least 860 mm", "fr": "La largeur de l'escalier doit être d'au moins 860 mm"}
+        }
+      ]
+    },
+    {
+      "id": "R-9.8.2.2-HEADROOM",
+      "reference": "NBC 2020 Div. B, Article 9.8.2.2",
+      "part": 9,
+      "severity": "major",
+      "discipline": "architectural",
+      "title": {
+        "en": "Stair headroom (private stairs)",
+        "fr": "Échappée des escaliers (escaliers privés)"
+      },
+      "requirement_text": {
+        "en": "Headroom over private stairs shall be not less than 1 950 mm.",
+        "fr": "L'échappée au-dessus des escaliers privés doit être d'au moins 1 950 mm."
+      },
+      "scope": {"collection": "stairs", "filter": [{"field": "private", "op": "is_true"}]},
+      "applicability": [],
+      "exceptions": [],
+      "requirements": [
+        {
+          "field": "headroom_mm",
+          "op": "ge",
+          "value": 1950,
+          "unit": "mm",
+          "uncertainty_margin": 10,
+          "message": {"en": "Headroom must be at least 1 950 mm", "fr": "L'échappée doit être d'au moins 1 950 mm"}
+        }
+      ]
+    },
+    {
+      "id": "R-9.8.8.2-GUARD-HEIGHT",
+      "reference": "NBC 2020 Div. B, Article 9.8.8.2",
+      "part": 9,
+      "severity": "major",
+      "discipline": "architectural",
+      "title": {
+        "en": "Minimum guard height",
+        "fr": "Hauteur minimale des garde-corps"
+      },
+      "requirement_text": {
+        "en": "Guards shall be not less than 900 mm high, or 1 070 mm where the walking surface is more than 1 800 mm above the adjacent surface.",
+        "fr": "Les garde-corps doivent avoir une hauteur d'au moins 900 mm, ou 1 070 mm lorsque la surface de circulation est à plus de 1 800 mm au-dessus de la surface adjacente."
+      },
+      "scope": {"collection": "guards", "filter": []},
+      "applicability": [],
+      "exceptions": [],
+      "requirements": [
+        {
+          "field": "height_mm",
+          "op": "ge",
+          "value": 900,
+          "unit": "mm",
+          "uncertainty_margin": 10,
+          "condition": [{"field": "walking_surface_height_above_grade_mm", "op": "le", "value": 1800}],
+          "message": {"en": "Guard must be at least 900 mm high", "fr": "Le garde-corps doit mesurer au moins 900 mm"}
+        },
+        {
+          "field": "height_mm",
+          "op": "ge",
+          "value": 1070,
+          "unit": "mm",
+          "uncertainty_margin": 10,
+          "condition": [{"field": "walking_surface_height_above_grade_mm", "op": "gt", "value": 1800}],
+          "message": {"en": "Guard must be at least 1 070 mm high (walking surface more than 1 800 mm above grade)", "fr": "Le garde-corps doit mesurer au moins 1 070 mm (surface à plus de 1 800 mm au-dessus du sol)"}
+        }
+      ]
+    },
+    {
+      "id": "R-9.8.8.1-GUARD-REQUIRED",
+      "reference": "NBC 2020 Div. B, Article 9.8.8.1",
+      "part": 9,
+      "severity": "major",
+      "discipline": "architectural",
+      "title": {
+        "en": "Guards required at raised walking surfaces",
+        "fr": "Garde-corps requis aux surfaces de circulation surélevées"
+      },
+      "requirement_text": {
+        "en": "A guard is required where the walking surface is more than 600 mm above the adjacent surface.",
+        "fr": "Un garde-corps est exigé lorsque la surface de circulation est à plus de 600 mm au-dessus de la surface adjacente."
+      },
+      "scope": {"collection": "raised_surfaces", "filter": [{"field": "height_above_adjacent_mm", "op": "gt", "value": 600}]},
+      "applicability": [],
+      "exceptions": [],
+      "requirements": [
+        {
+          "field": "guard_provided",
+          "op": "is_true",
+          "message": {"en": "A guard must be provided", "fr": "Un garde-corps doit être prévu"}
+        }
+      ]
+    },
+    {
+      "id": "R-9.9.10.1-EGRESS-WINDOW",
+      "reference": "NBC 2020 Div. B, Article 9.9.10.1",
+      "part": 9,
+      "severity": "critical",
+      "discipline": "fire_safety",
+      "title": {
+        "en": "Egress windows in bedrooms",
+        "fr": "Fenêtres de secours dans les chambres"
+      },
+      "requirement_text": {
+        "en": "Each bedroom shall have at least one outside window openable from the inside, with an unobstructed open area of at least 0.35 m2 and no dimension less than 380 mm, unless the suite is sprinklered or the bedroom has a door to the exterior.",
+        "fr": "Chaque chambre doit avoir au moins une fenêtre extérieure ouvrable de l'intérieur, offrant une ouverture dégagée d'au moins 0,35 m2 sans dimension inférieure à 380 mm, sauf si la suite est protégée par gicleurs ou si la chambre a une porte donnant sur l'extérieur."
+      },
+      "scope": {"collection": "spaces", "filter": [{"field": "is_bedroom", "op": "is_true"}]},
+      "applicability": [],
+      "exceptions": [
+        {"field": "$.building.sprinklered", "op": "is_true"},
+        {"field": "door_to_exterior", "op": "is_true"}
+      ],
+      "requirements": [
+        {
+          "field": "egress_window.open_area_m2",
+          "op": "ge",
+          "value": 0.35,
+          "unit": "m2",
+          "uncertainty_margin": 0.01,
+          "message": {"en": "Egress window open area must be at least 0.35 m2", "fr": "L'ouverture de la fenêtre de secours doit être d'au moins 0,35 m2"}
+        },
+        {
+          "field": "egress_window.min_dimension_mm",
+          "op": "ge",
+          "value": 380,
+          "unit": "mm",
+          "uncertainty_margin": 5,
+          "message": {"en": "No egress window dimension may be less than 380 mm", "fr": "Aucune dimension de la fenêtre de secours ne doit être inférieure à 380 mm"}
+        }
+      ]
+    },
+    {
+      "id": "R-9.10.19.3-SMOKE-ALARMS",
+      "reference": "NBC 2020 Div. B, Article 9.10.19.3",
+      "part": 9,
+      "severity": "critical",
+      "discipline": "fire_safety",
+      "title": {
+        "en": "Smoke alarm locations",
+        "fr": "Emplacement des avertisseurs de fumée"
+      },
+      "requirement_text": {
+        "en": "Smoke alarms shall be installed on each storey, in each bedroom, and in each hallway serving bedrooms.",
+        "fr": "Des avertisseurs de fumée doivent être installés à chaque étage, dans chaque chambre et dans chaque corridor desservant des chambres."
+      },
+      "scope": {"collection": null},
+      "applicability": [],
+      "exceptions": [],
+      "requirements": [
+        {
+          "field": "fire_safety.smoke_alarm_each_storey",
+          "op": "is_true",
+          "message": {"en": "A smoke alarm is required on each storey", "fr": "Un avertisseur de fumée est requis à chaque étage"}
+        },
+        {
+          "field": "fire_safety.smoke_alarm_each_bedroom",
+          "op": "is_true",
+          "message": {"en": "A smoke alarm is required in each bedroom", "fr": "Un avertisseur de fumée est requis dans chaque chambre"}
+        }
+      ]
+    },
+    {
+      "id": "R-9.10.19.5-SS-INTERCONNECT",
+      "reference": "NBC 2020 Div. B, Article 9.10.19.5 (simplified)",
+      "part": 9,
+      "typologies": ["house_with_secondary_suite", "small_multi_dwelling"],
+      "severity": "critical",
+      "discipline": "fire_safety",
+      "title": {
+        "en": "Interconnected smoke alarms between dwelling units / secondary suite",
+        "fr": "Avertisseurs de fumée interconnectés entre logements / logement accessoire"
+      },
+      "requirement_text": {
+        "en": "In a house with a secondary suite or a building with multiple dwelling units, smoke alarms shall be interconnected such that activation in one unit sounds the alarms in the other unit(s).",
+        "fr": "Dans une maison avec logement accessoire ou un bâtiment à logements multiples, les avertisseurs de fumée doivent être interconnectés de sorte que le déclenchement dans un logement fasse sonner ceux des autres logements."
+      },
+      "scope": {"collection": null},
+      "applicability": [],
+      "exceptions": [],
+      "requirements": [
+        {
+          "field": "fire_safety.smoke_alarms_interconnected",
+          "op": "is_true",
+          "message": {
+            "en": "Smoke alarms must be interconnected between dwelling units",
+            "fr": "Les avertisseurs de fumée doivent être interconnectés entre les logements"
+          }
+        }
+      ]
+    },
+    {
+      "id": "R-9.32.3.9-CO-ALARM",
+      "reference": "NBC 2020 Div. B, Article 9.32.3.9",
+      "part": 9,
+      "severity": "critical",
+      "discipline": "fire_safety",
+      "title": {
+        "en": "Carbon monoxide alarms",
+        "fr": "Avertisseurs de monoxyde de carbone"
+      },
+      "requirement_text": {
+        "en": "A CO alarm is required in dwellings containing a fuel-burning appliance or an attached garage.",
+        "fr": "Un avertisseur de CO est requis dans les logements comportant un appareil à combustion ou un garage attenant."
+      },
+      "scope": {"collection": null},
+      "applicability": [
+        {"any": [
+          {"field": "$.building.fuel_burning_appliance", "op": "is_true"},
+          {"field": "$.building.attached_garage", "op": "is_true"}
+        ]}
+      ],
+      "exceptions": [],
+      "requirements": [
+        {
+          "field": "fire_safety.co_alarm_provided",
+          "op": "is_true",
+          "message": {"en": "A carbon monoxide alarm must be provided", "fr": "Un avertisseur de monoxyde de carbone doit être prévu"}
+        }
+      ]
+    },
+    {
+      "id": "R-3.4.2.1-EXIT-COUNT",
+      "reference": "NBC 2020 Div. B, Article 3.4.2.1",
+      "part": 3,
+      "severity": "critical",
+      "discipline": "fire_safety",
+      "title": {
+        "en": "Minimum number of exits per floor area",
+        "fr": "Nombre minimal d'issues par aire de plancher"
+      },
+      "requirement_text": {
+        "en": "Every floor area intended for occupancy shall be served by at least 2 exits (simplified provision for prototype).",
+        "fr": "Chaque aire de plancher destinée à être occupée doit être desservie par au moins 2 issues (disposition simplifiée pour le prototype)."
+      },
+      "scope": {"collection": "floor_areas", "filter": []},
+      "applicability": [],
+      "exceptions": [],
+      "requirements": [
+        {
+          "field": "exit_count",
+          "op": "ge",
+          "value": 2,
+          "message": {"en": "At least 2 exits are required", "fr": "Au moins 2 issues sont requises"}
+        }
+      ]
+    },
+    {
+      "id": "R-3.4.3.2-EXIT-WIDTH",
+      "reference": "NBC 2020 Div. B, Article 3.4.3.2",
+      "part": 3,
+      "severity": "critical",
+      "discipline": "fire_safety",
+      "title": {
+        "en": "Aggregate exit width per occupant load",
+        "fr": "Largeur cumulée des issues selon le nombre de personnes"
+      },
+      "requirement_text": {
+        "en": "The aggregate exit width serving a floor area shall be at least 6.1 mm per person (ramps and doorways).",
+        "fr": "La largeur cumulée des issues desservant une aire de plancher doit être d'au moins 6,1 mm par personne (rampes et portes)."
+      },
+      "scope": {"collection": "floor_areas", "filter": []},
+      "applicability": [],
+      "exceptions": [],
+      "requirements": [
+        {
+          "field": "total_exit_width_mm",
+          "op": "ge",
+          "value_expr": {"field": "occupant_load", "factor": 6.1},
+          "unit": "mm",
+          "uncertainty_margin": 10,
+          "message": {"en": "Aggregate exit width must be at least 6.1 mm per occupant", "fr": "La largeur cumulée des issues doit être d'au moins 6,1 mm par personne"}
+        }
+      ]
+    },
+    {
+      "id": "R-3.2.4.1-FIRE-ALARM",
+      "reference": "NBC 2020 Div. B, Article 3.2.4.1",
+      "part": 3,
+      "severity": "critical",
+      "discipline": "fire_safety",
+      "title": {
+        "en": "Fire alarm system required",
+        "fr": "Système d'alarme incendie requis"
+      },
+      "requirement_text": {
+        "en": "A fire alarm system is required in buildings more than 3 storeys or with an occupant load above 300 (simplified provision for prototype).",
+        "fr": "Un système d'alarme incendie est requis dans les bâtiments de plus de 3 étages ou dont le nombre de personnes dépasse 300 (disposition simplifiée pour le prototype)."
+      },
+      "scope": {"collection": null},
+      "applicability": [
+        {"any": [
+          {"field": "$.building.storeys", "op": "gt", "value": 3},
+          {"field": "$.building.total_occupant_load", "op": "gt", "value": 300}
+        ]}
+      ],
+      "exceptions": [],
+      "requirements": [
+        {
+          "field": "fire_safety.fire_alarm_system",
+          "op": "is_true",
+          "message": {"en": "A fire alarm system must be provided", "fr": "Un système d'alarme incendie doit être prévu"}
+        }
+      ]
+    },
+    {
+      "id": "R-ADM-COMPLETENESS",
+      "reference": "Administrative - permit application completeness",
+      "part": "any",
+      "severity": "administrative",
+      "discipline": "administrative",
+      "title": {
+        "en": "Permit application completeness",
+        "fr": "Complétude de la demande de permis"
+      },
+      "requirement_text": {
+        "en": "The application must identify the legal description of the site and include at least one drawing or model document.",
+        "fr": "La demande doit indiquer la désignation cadastrale du site et inclure au moins un dessin ou un modèle."
+      },
+      "scope": {"collection": null},
+      "applicability": [],
+      "exceptions": [],
+      "requirements": [
+        {
+          "field": "application.legal_description",
+          "op": "exists",
+          "message": {"en": "Legal description of the site is required", "fr": "La désignation cadastrale du site est requise"}
+        },
+        {
+          "field": "application.documents",
+          "op": "not_empty",
+          "message": {"en": "At least one drawing or model document is required", "fr": "Au moins un dessin ou modèle est requis"}
+        }
+      ]
+    }
+  ]
+}

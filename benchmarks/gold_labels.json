@@ -1,0 +1,68 @@
+{
+  "description": "Gold-labelled expected rule verdicts, hand-derived from the source documents by reading the drawings/model data against NBC 2020 provisions. Used by permitcheck.benchmark to measure accuracy on simple vs complex rules per the ISC challenge footnotes.",
+  "cases": [
+    {
+      "name": "bungalow_compliant",
+      "application_file": "APP-2026-0101_bungalow_compliant.json",
+      "expected": {
+        "R-9.5.3.1-CEILING": "MEETS",
+        "R-9.8.4.1-STAIR-RISE": "MEETS",
+        "R-9.8.4.2-STAIR-RUN": "MEETS",
+        "R-9.8.2.1-STAIR-WIDTH": "MEETS",
+        "R-9.8.2.2-HEADROOM": "MEETS",
+        "R-9.8.8.2-GUARD-HEIGHT": "MEETS",
+        "R-9.8.8.1-GUARD-REQUIRED": "MEETS",
+        "R-9.9.10.1-EGRESS-WINDOW": "MEETS",
+        "R-9.10.19.3-SMOKE-ALARMS": "MEETS",
+        "R-9.32.3.9-CO-ALARM": "MEETS",
+        "R-ADM-COMPLETENESS": "MEETS"
+      }
+    },
+    {
+      "name": "duplex_issues",
+      "application_file": "APP-2026-0142_duplex_issues.json",
+      "expected": {
+        "R-9.5.3.1-CEILING": "DOES_NOT_MEET",
+        "R-9.8.4.1-STAIR-RISE": "DOES_NOT_MEET",
+        "R-9.8.4.2-STAIR-RUN": "UNCERTAIN",
+        "R-9.8.2.1-STAIR-WIDTH": "MEETS",
+        "R-9.8.2.2-HEADROOM": "INFO_NOT_AVAILABLE",
+        "R-9.8.8.2-GUARD-HEIGHT": "DOES_NOT_MEET",
+        "R-9.8.8.1-GUARD-REQUIRED": "DOES_NOT_MEET",
+        "R-9.9.10.1-EGRESS-WINDOW": "DOES_NOT_MEET",
+        "R-9.10.19.3-SMOKE-ALARMS": "INFO_NOT_AVAILABLE",
+        "R-9.10.19.5-SS-INTERCONNECT": "INFO_NOT_AVAILABLE",
+        "R-9.32.3.9-CO-ALARM": "MEETS",
+        "R-ADM-COMPLETENESS": "MEETS"
+      }
+    },
+    {
+      "name": "office_part3",
+      "application_file": "APP-2026-0177_office_part3.json",
+      "expected": {
+        "R-3.4.2.1-EXIT-COUNT": "DOES_NOT_MEET",
+        "R-3.4.3.2-EXIT-WIDTH": "DOES_NOT_MEET",
+        "R-3.2.4.1-FIRE-ALARM": "MEETS",
+        "R-ADM-COMPLETENESS": "MEETS"
+      }
+    },
+    {
+      "name": "secondary_suite_extracted",
+      "submission_folder": "data/submissions/APP-2026-0201",
+      "expected": {
+        "R-9.5.3.1-CEILING": "UNCERTAIN",
+        "R-9.8.4.1-STAIR-RISE": "MEETS",
+        "R-9.8.4.2-STAIR-RUN": "DOES_NOT_MEET",
+        "R-9.8.2.1-STAIR-WIDTH": "MEETS",
+        "R-9.8.2.2-HEADROOM": "MEETS",
+        "R-9.8.8.2-GUARD-HEIGHT": "MEETS",
+        "R-9.8.8.1-GUARD-REQUIRED": "MEETS",
+        "R-9.9.10.1-EGRESS-WINDOW": "MEETS",
+        "R-9.10.19.3-SMOKE-ALARMS": "MEETS",
+        "R-9.10.19.5-SS-INTERCONNECT": "DOES_NOT_MEET",
+        "R-9.32.3.9-CO-ALARM": "MEETS",
+        "R-ADM-COMPLETENESS": "MEETS"
+      }
+    }
+  ]
+}

@@ -1,0 +1,42 @@
+# NOTE: gitignore does not support trailing inline comments. Keep comments on
+# their own lines, otherwise the pattern silently matches nothing.
+
+# ------------------------------------------------------------------ secrets
+# HMAC key that seals submission versions. Never commit.
+data/.seal_key
+*.key
+*.pem
+
+# ---------------------------------------------------------------------- data
+# Everything under data/ is one of: a runtime artifact, a large binary, a
+# third-party download, or a regenerable fixture. Only the tiny sample
+# application JSONs are tracked.
+#
+#   Third-party corpora  : python tools/fetch_data.py   (see RUN.md)
+#   Demo submission      : python tools/make_samples.py
+#   Scan fixtures        : python tools/make_floorplan.py
+#   Annotated renders    : python tools/visualize.py
+data/*
+!data/applications/
+data/applications/*
+!data/applications/*.json
+
+# ------------------------------------------------------- local editor config
+# Contains machine-specific absolute paths.
+.claude/
+
+# ------------------------------------------------------------------- python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+build/
+dist/
+
+# ---------------------------------------------------------------- editors/os
+.vscode/
+.idea/
+Thumbs.db
+desktop.ini
+.DS_Store

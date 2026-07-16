@@ -1,0 +1,35 @@
+{
+  "application": {
+    "id": "APP-2026-0177",
+    "municipality": "Saskatoon, SK",
+    "applicant": "Meewasin Developments Corp.",
+    "submitted": "2026-07-02",
+    "legal_description": "Lot 12, Block 4, Plan 102233456",
+    "code": "NBC-2020",
+    "documents": [
+      {"name": "office_tower.ifc", "type": "ifc", "schema": "IFC4"},
+      {"name": "LS-01 Life Safety Plans", "type": "pdf"}
+    ]
+  },
+  "building": {
+    "name": "Four-storey office building",
+    "major_occupancy": "D",
+    "storeys": 4,
+    "building_area_m2": 1450.0,
+    "sprinklered": true,
+    "total_occupant_load": 620
+  },
+  "floor_areas": [
+    {"id": "FA-1", "name": "Ground floor", "occupant_load": 180, "exit_count": 3,
+     "total_exit_width_mm": {"value": 2440, "confidence": 0.96, "source": "IFC doors, office_tower.ifc"}},
+    {"id": "FA-2", "name": "2nd floor", "occupant_load": 160, "exit_count": 2,
+     "total_exit_width_mm": {"value": 1830, "confidence": 0.96, "source": "IFC doors, office_tower.ifc"}},
+    {"id": "FA-3", "name": "3rd floor", "occupant_load": 160, "exit_count": 2,
+     "total_exit_width_mm": {"value": 915, "confidence": 0.96, "source": "IFC doors, office_tower.ifc"}},
+    {"id": "FA-4", "name": "4th floor (penthouse offices)", "occupant_load": 120, "exit_count": 1,
+     "total_exit_width_mm": {"value": 915, "confidence": 0.96, "source": "IFC doors, office_tower.ifc"}}
+  ],
+  "fire_safety": {
+    "fire_alarm_system": true
+  }
+}

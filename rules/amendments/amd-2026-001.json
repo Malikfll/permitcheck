@@ -1,0 +1,39 @@
+{
+  "amendment_id": "AMD-2026-001",
+  "publisher": "NRC digitalized codes database (simulated feed)",
+  "effective": "2026-09-01",
+  "target_ruleset": "1.0.0",
+  "new_version": "1.1.0",
+  "add": [
+    {
+      "id": "R-9.13.4.2-RADON-ROUGH-IN",
+      "reference": "NBC 2020 Div. B, Article 9.13.4.2 (simplified)",
+      "part": 9,
+      "severity": "major",
+      "discipline": "architectural",
+      "title": {
+        "en": "Radon subfloor depressurization rough-in",
+        "fr": "Préparation pour dépressurisation sous le plancher (radon)"
+      },
+      "requirement_text": {
+        "en": "Dwellings shall be provided with a rough-in for a subfloor depressurization radon mitigation system.",
+        "fr": "Les logements doivent comporter une préparation pour un système d'atténuation du radon par dépressurisation sous le plancher."
+      },
+      "scope": {"collection": null},
+      "applicability": [],
+      "exceptions": [],
+      "requirements": [
+        {
+          "field": "building.radon_rough_in",
+          "op": "is_true",
+          "message": {
+            "en": "A radon depressurization rough-in must be provided",
+            "fr": "Une préparation pour dépressurisation (radon) doit être prévue"
+          }
+        }
+      ]
+    }
+  ],
+  "modify": [],
+  "remove": []
+}

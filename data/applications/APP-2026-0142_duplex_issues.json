@@ -1,0 +1,61 @@
+{
+  "application": {
+    "id": "APP-2026-0142",
+    "municipality": "Moncton, NB",
+    "applicant": "Harbourline Homes Ltd.",
+    "submitted": "2026-06-28",
+    "legal_description": "PID 70543211, Westmorland County",
+    "code": "NBC-2020",
+    "documents": [
+      {"name": "D-100 Plans (scanned)", "type": "pdf"},
+      {"name": "D-300 Deck & Stair Details", "type": "pdf"}
+    ]
+  },
+  "building": {
+    "name": "Two-storey duplex",
+    "major_occupancy": "C",
+    "storeys": 2,
+    "building_area_m2": 232.0,
+    "dwelling_units": 2,
+    "has_secondary_suite": false,
+    "sprinklered": false,
+    "fuel_burning_appliance": true,
+    "attached_garage": false
+  },
+  "spaces": [
+    {"id": "S-101", "name": "Unit A living room", "habitable": true, "is_bedroom": false,
+     "ceiling_height_m": {"value": 2.42, "confidence": 0.91, "source": "D-100 sheet 2 (OCR)"}},
+    {"id": "S-102", "name": "Unit A bedroom", "habitable": true, "is_bedroom": true,
+     "ceiling_height_m": {"value": 2.24, "confidence": 0.9, "source": "D-100 sheet 2 (OCR)"},
+     "egress_window": {
+       "open_area_m2": {"value": 0.3, "confidence": 0.88, "source": "D-100 window schedule (OCR)"},
+       "min_dimension_mm": {"value": 350, "confidence": 0.88, "source": "D-100 window schedule (OCR)"}
+     }},
+    {"id": "S-201", "name": "Unit B bedroom", "habitable": true, "is_bedroom": true,
+     "ceiling_height_m": {"value": 2.31, "confidence": 0.66, "source": "D-100 sheet 3 (low-quality scan, OCR)"},
+     "egress_window": {
+       "open_area_m2": {"value": 0.41, "confidence": 0.9, "source": "D-100 window schedule (OCR)"},
+       "min_dimension_mm": {"value": 500, "confidence": 0.9, "source": "D-100 window schedule (OCR)"}
+     }}
+  ],
+  "stairs": [
+    {"id": "ST-1", "name": "Common stair", "private": true,
+     "rise_mm": {"value": 210, "confidence": 0.92, "source": "D-300 stair detail"},
+     "run_mm": {"value": 255, "confidence": 0.62, "source": "D-300 stair detail (dimension partially legible)"},
+     "width_mm": {"value": 880, "confidence": 0.92, "source": "D-300 stair detail"},
+     "headroom_mm": null}
+  ],
+  "guards": [
+    {"id": "G-1", "name": "Unit B balcony guard",
+     "walking_surface_height_above_grade_mm": 2500,
+     "height_mm": {"value": 900, "confidence": 0.9, "source": "D-300 balcony detail"}}
+  ],
+  "raised_surfaces": [
+    {"id": "RS-1", "name": "Unit B balcony", "height_above_adjacent_mm": 2500, "guard_provided": true},
+    {"id": "RS-2", "name": "Rear landing", "height_above_adjacent_mm": 750, "guard_provided": false}
+  ],
+  "fire_safety": {
+    "smoke_alarm_each_storey": true,
+    "co_alarm_provided": true
+  }
+}

@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PermitCheck - Deterministic compliance checking</title>
+<style>
+  :root{--ok:#1a7f37;--fail:#c62828;--unc:#e07b00;--na:#5c6bc0;--bg:#f5f6f8;--card:#fff;--ink:#1f2430;--muted:#6b7280;--accent:#0f4c81}
+  *{box-sizing:border-box}
+  body{margin:0;font-family:"Segoe UI",system-ui,Arial,sans-serif;background:var(--bg);color:var(--ink)}
+  header{background:var(--accent);color:#fff;padding:14px 28px;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+  header h1{font-size:19px;margin:0;font-weight:600}
+  header .sub{font-size:12px;opacity:.85}
+  .lang{margin-left:auto}
+  .lang button{background:transparent;border:1px solid rgba(255,255,255,.6);color:#fff;padding:4px 10px;border-radius:6px;cursor:pointer}
+  .lang button.active{background:#fff;color:var(--accent);font-weight:600}
+  main{max-width:1080px;margin:24px auto;padding:0 20px}
+  .card{background:var(--card);border:1px solid #e3e5ea;border-radius:10px;padding:18px 20px;margin-bottom:18px;box-shadow:0 1px 2px rgba(0,0,0,.04)}
+  .row{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+  select,button,input,textarea{font:inherit;padding:7px 12px;border-radius:7px;border:1px solid #cfd3da}
+  button.primary{background:var(--accent);color:#fff;border:none;cursor:pointer}
+  button.ghost{background:#fff;cursor:pointer}
+  .badge{display:inline-block;padding:2px 10px;border-radius:999px;color:#fff;font-size:12px;font-weight:600;white-space:nowrap}
+  .b-MEETS{background:var(--ok)}.b-DOES_NOT_MEET{background:var(--fail)}.b-UNCERTAIN{background:var(--unc)}.b-INFO_NOT_AVAILABLE{background:var(--na)}.b-NA{background:#9aa0aa}
+  .summary{display:flex;gap:14px;flex-wrap:wrap;margin-top:10px}
+  .pill{background:#f0f2f5;border-radius:8px;padding:8px 14px;text-align:center;min-width:110px}
+  .pill b{display:block;font-size:22px}
+  .rule{border:1px solid #e3e5ea;border-radius:8px;margin:10px 0;overflow:hidden}
+  .rule>summary{padding:10px 14px;cursor:pointer;display:flex;gap:10px;align-items:center;background:#fafbfc;list-style:none}
+  .rule>summary::-webkit-details-marker{display:none}
+  .rule .body{padding:10px 16px;border-top:1px solid #eef0f3;font-size:13.5px}
+  .ref{color:var(--muted);font-size:12px}
+  table{border-collapse:collapse;width:100%;font-size:13px;margin:8px 0}
+  td,th{border:1px solid #e6e8ec;padding:5px 9px;text-align:left}
+  th{background:#f4f5f7}
+  .muted{color:var(--muted);font-size:12.5px}
+  .review{background:#f8f9fb;border-radius:7px;padding:10px;margin-top:10px}
+  .review .row{gap:8px}
+  .flag{font-size:12px;color:var(--muted)}
+  .trace{font-family:Consolas,monospace;font-size:11.5px;color:var(--muted)}
+  .exports a{margin-right:10px}
+  footer{max-width:1080px;margin:8px auto 40px;padding:0 20px;color:var(--muted);font-size:12px}
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>PermitCheck <span class="sub" data-i18n="tagline"></span></h1>
+    <div class="sub" data-i18n="subtitle"></div>
+  </div>
+  <div class="lang">
+    <button id="btn-en" onclick="setLang('en')">EN</button>
+    <button id="btn-fr" onclick="setLang('fr')">FR</button>
+  </div>
+</header>
+
+<main>
+  <div class="card">
+    <div class="row">
+      <label data-i18n="upload"></label>
+      <input type="file" id="upFile" accept=".pdf,.png,.jpg,.jpeg,.tif,.tiff,.ifc,.dxf" multiple
+             onchange="onFilesChosen()">
+      <input id="upFolder" placeholder="project name" value="my_submission" style="width:160px">
+      <span id="upStatus" class="muted"></span>
+    </div>
+    <div class="muted" data-i18n="upload_hint" style="margin-top:4px"></div>
+    <div class="row" style="margin-top:12px;padding-top:12px;border-top:1px dashed #ddd">
+      <label data-i18n="pick"></label>
+      <select id="appSelect" style="min-width:320px"></select>
+      <button class="primary" onclick="runOrUpload()" data-i18n="run"></button>
+      <span id="status" class="muted"></span>
+    </div>
+  </div>
+
+  <div id="resultArea"></div>
+
+  <div class="card">
+    <div class="row">
+      <b data-i18n="viewer"></b>
+      <select id="annFolder" onchange="loadAnnFiles()" style="max-width:260px"></select>
+      <select id="annFile" style="max-width:320px"></select>
+      <button class="primary" onclick="showAnnotated()" data-i18n="view_btn"></button>
+      <span id="annStatus" class="muted"></span>
+    </div>
+    <div class="muted" data-i18n="viewer_hint" style="margin-top:4px"></div>
+    <div id="annView" style="margin-top:10px;overflow:auto;max-height:640px;border:1px solid #eee;border-radius:8px"></div>
+  </div>
+
+  <div class="card" id="triageCard" style="display:none">
+    <b data-i18n="triage"></b>
+    <div class="muted" data-i18n="triage_hint" style="margin-top:4px"></div>
+    <div id="triageBody" style="margin-top:10px"></div>
+  </div>
+
+  <div class="card">
+    <div class="row">
+      <b data-i18n="audit"></b>
+      <button class="ghost" onclick="loadAudit()" data-i18n="refresh"></button>
+      <span id="auditStatus" class="muted"></span>
+    </div>
+    <div id="auditBody" class="trace" style="max-height:220px;overflow:auto;margin-top:8px"></div>
+  </div>
+</main>
+
+<footer data-i18n="footer"></footer>
+
+<script>
+const I18N = {
+  en: {
+    tagline:"· deterministic compliance checking prototype",
+    subtitle:"National Building Code of Canada 2020 - human-in-the-loop, fully traceable, no generative AI in the decision path",
+    pick:"…or choose a sample permit:", run:"Run compliance check", refresh:"Refresh",
+    audit:"Audit trail (hash-chained)", checking:"Checking…",
+    classified:"Classified under NBC Part", overall:"Overall result",
+    MEETS:"Meets", DOES_NOT_MEET:"Does not meet", UNCERTAIN:"Uncertain", INFO_NOT_AVAILABLE:"Info not available",
+    NA:"Not applicable", element:"Element", observed:"Observed", limit:"Limit", verdict:"Verdict", notes:"Notes",
+    exports:"Export report:", review:"Human review", reviewer:"Reviewer name", comment:"Comment (optional)",
+    submit:"Record decision", decided:"decision recorded", skipped:"Skipped:",
+    APPROVED:"Approve machine verdict", OVERRIDDEN_MEETS:"Override → Meets",
+    OVERRIDDEN_DOES_NOT_MEET:"Override → Does not meet", NEEDS_RESUBMISSION:"Request resubmission",
+    exception:"Exception applied - requirement waived", noscope:"No elements in scope",
+    rawfiles:"raw files", version:"Submission version", seal:"digital seal", changed:"changed",
+    triage:"Suggested review plan", optimize:"Optimize review plan",
+    triage_hint:"An optimized plan of who should review what, and in which order, to clear this submission fastest.",
+    assignment:"Who reviews what", queue:"Review order",
+    vs_fifo:"faster than first-come-first-served", minutes:"min", findings:"items to review", slot:"Reviewer",
+    start:"Start", finish:"Done by", weight:"Priority", match:"", mismatch:"↗ different specialty",
+    team:"Review team:",
+    offline:"⚠ API not reachable - this page needs its backend. Start it with:  python -m permitcheck.cli serve  then open http://127.0.0.1:8742",
+    missing_title:"Missing information - enter manually", missing_hint:"The drawings did not provide these. Fill any you can; the check re-runs instantly.",
+    yourname:"Your name", fill_btn:"Save values & re-check", limit:"code limit", nothing_missing:"All required data was found in the submission.",
+    viewer:"Annotated documents", view_btn:"View annotated", viewer_hint:"See what the pipeline detected overlaid on the real drawing (boxes wrap the exact extracted text).", rendering:"Rendering…",
+    upload:"Upload your documents:", upload_btn:"Upload & check", uploading:"Uploading…",
+    or_upload:"…or upload your own documents:", upload_hint:"Choose one or more drawings/PDFs (Fiches), then click the button - they're merged into one submission and checked automatically.",
+    uploaded_set:"uploaded", upload_run:"Upload & check",
+    footer:"Prototype for the Innovative Solutions Canada / NRC challenge “Deterministic AI-assisted compliance checking for building permit applications”. Verdicts are produced exclusively by a deterministic rules engine over machine-readable code provisions; all runs and human decisions are recorded in a tamper-evident audit log. Demo rules are simplified excerpts of NBC 2020 and are not a substitute for the code.",
+    chain_ok:"chain verified ✓", chain_bad:"CHAIN BROKEN ✗"
+  },
+  fr: {
+    tagline:"· prototype de vérification déterministe de conformité",
+    subtitle:"Code national du bâtiment du Canada 2020 - humain dans la boucle, entièrement traçable, aucune IA générative dans la décision",
+    pick:"…ou choisir un permis exemple :", run:"Lancer la vérification", refresh:"Actualiser",
+    audit:"Journal d'audit (chaîné par hachage)", checking:"Vérification…",
+    classified:"Classé sous la partie", overall:"Résultat global",
+    MEETS:"Conforme", DOES_NOT_MEET:"Non conforme", UNCERTAIN:"Incertain", INFO_NOT_AVAILABLE:"Info non disponible",
+    NA:"Non applicable", element:"Élément", observed:"Observé", limit:"Limite", verdict:"Verdict", notes:"Notes",
+    exports:"Exporter le rapport :", review:"Examen humain", reviewer:"Nom de l'examinateur", comment:"Commentaire (facultatif)",
+    submit:"Consigner la décision", decided:"décision consignée", skipped:"Ignorée :",
+    APPROVED:"Approuver le verdict machine", OVERRIDDEN_MEETS:"Remplacer → Conforme",
+    OVERRIDDEN_DOES_NOT_MEET:"Remplacer → Non conforme", NEEDS_RESUBMISSION:"Exiger une nouvelle soumission",
+    exception:"Exception appliquée - exigence levée", noscope:"Aucun élément visé",
+    rawfiles:"fichiers bruts", version:"Version de la soumission", seal:"sceau numérique", changed:"modifiés",
+    triage:"Plan d'examen suggéré", optimize:"Optimiser le plan",
+    triage_hint:"Un plan optimisé indiquant qui doit examiner quoi, et dans quel ordre, pour traiter cette soumission au plus vite.",
+    assignment:"Qui examine quoi", queue:"Ordre d'examen",
+    vs_fifo:"plus rapide que premier arrivé", minutes:"min", findings:"éléments à examiner", slot:"Examinateur",
+    start:"Début", finish:"Terminé avant", weight:"Priorité", match:"", mismatch:"↗ autre spécialité",
+    team:"Équipe d'examen :",
+    offline:"⚠ API injoignable - cette page requiert son serveur. Démarrez-le :  python -m permitcheck.cli serve  puis ouvrez http://127.0.0.1:8742",
+    missing_title:"Information manquante - saisie manuelle", missing_hint:"Les dessins ne fournissent pas ces données. Remplissez celles que vous pouvez; la vérification se relance.",
+    yourname:"Votre nom", fill_btn:"Enregistrer et revérifier", limit:"limite du code", nothing_missing:"Toutes les données requises ont été trouvées.",
+    viewer:"Documents annotés", view_btn:"Voir annoté", viewer_hint:"Voyez ce que le pipeline a détecté superposé sur le dessin réel (les cadres entourent le texte exact extrait).", rendering:"Rendu en cours…",
+    upload:"Téléverser vos documents :", upload_btn:"Téléverser et vérifier", uploading:"Téléversement…",
+    or_upload:"…ou téléversez vos propres documents :", upload_hint:"Choisissez un ou plusieurs dessins/PDF (fiches), puis cliquez le bouton - ils sont fusionnés en une soumission et vérifiés automatiquement.",
+    uploaded_set:"téléversé", upload_run:"Téléverser et vérifier",
+    footer:"Prototype pour le défi Solutions innovatrices Canada / CNRC « Vérification déterministe de la conformité assistée par IA pour les demandes de permis de construction ». Les verdicts proviennent exclusivement d'un moteur de règles déterministe appliqué à des dispositions lisibles par machine; chaque exécution et chaque décision humaine sont consignées dans un journal d'audit infalsifiable. Les règles de démonstration sont des extraits simplifiés du CNB 2020 et ne remplacent pas le code.",
+    chain_ok:"chaîne vérifiée ✓", chain_bad:"CHAÎNE BRISÉE ✗"
+  }
+};
+let lang = "en", currentRun = null;
+
+function t(k){ return I18N[lang][k] || k; }
+function setLang(l){
+  lang = l;
+  document.documentElement.lang = l;
+  document.getElementById("btn-en").classList.toggle("active", l==="en");
+  document.getElementById("btn-fr").classList.toggle("active", l==="fr");
+  document.querySelectorAll("[data-i18n]").forEach(el => el.textContent = t(el.dataset.i18n));
+  if(currentRun) render(currentRun);
+}
+function badge(v){ return `<span class="badge b-${v}">${t(v)}</span>`; }
+function esc(s){ return String(s??"").replace(/[&<>"]/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
+
+const MANIFEST_FOLDERS = new Set();  // folders that have a manifest (sub:)
+async function loadApps(){
+  let apps, subs, sets;
+  try {
+    [apps, subs, sets] = await Promise.all([
+      (await fetch("/api/applications")).json(),
+      (await fetch("/api/submissions")).json(),
+      (await fetch("/api/annotatable")).json()
+    ]);
+  } catch(e){
+    document.getElementById("status").textContent = t("offline");
+    return;
+  }
+  subs.forEach(s=>MANIFEST_FOLDERS.add(s.folder));
+  // uploaded / multi-doc sets = annotatable folders without a manifest
+  const setOpts = sets.filter(g=>!MANIFEST_FOLDERS.has(g.folder))
+    .map(g=>`<option value="set:${esc(g.folder)}">📁 ${esc(g.folder)} - ${g.files.length} ${t("rawfiles")} (${t("uploaded_set")})</option>`).join("");
+  document.getElementById("appSelect").innerHTML =
+    apps.map(a=>`<option value="file:${a.file}">${a.id} - ${esc(a.building)} (${esc(a.municipality)})</option>`).join("") +
+    subs.map(s=>`<option value="sub:${s.folder}">${s.id} - ${t("rawfiles")}: ${s.files.join(", ")} (${esc(s.municipality)})</option>`).join("") +
+    setOpts;
+}
+
+function onFilesChosen(){
+  const n = document.getElementById("upFile").files.length;
+  // the single button now reflects that it will upload + check the chosen files
+  document.querySelectorAll('[data-i18n="run"]').forEach(b=>{
+    b.textContent = n ? t("upload_run") : t("run");
+  });
+  document.getElementById("upStatus").textContent =
+    n ? `${n} file(s) ready - click “${t("upload_run")}”` : "";
+}
+
+// one action: if the user picked files, upload them then check; otherwise
+// check whatever permit/set is selected in the dropdown.
+async function runOrUpload(){
+  if(document.getElementById("upFile").files.length){
+    await uploadDocs();
+  } else {
+    await runCheck();
+  }
+}
+
+async function runCheck(){
+  const sel = document.getElementById("appSelect").value;
+  let body;
+  if(sel.startsWith("set:")) body = {submission_set: sel.slice(4)};
+  else if(sel.startsWith("sub:")) body = {submission_folder: sel.slice(4)};
+  else body = {application_file: sel.slice(5)};
+  document.getElementById("status").textContent = t("checking");
+  const res = await fetch("/api/check",{method:"POST",headers:{"Content-Type":"application/json"},
+    body:JSON.stringify(body)});
+  currentRun = await res.json();
+  document.getElementById("status").textContent = "";
+  render(currentRun);
+  loadAudit();
+  refreshTriage();
+}
+
+function checksTable(inst){
+  if(inst.exception_applied) return `<div class="muted">${t("exception")}</div>`;
+  if(!inst.checks.length) return "";
+  const rows = inst.checks.map(c=>{
+    const u = c.unit||"";
+    return `<tr><td>${badge(c.verdict)}</td>
+      <td>${c.observed==null?"-":esc(c.observed)+" "+u}${c.confidence!=null?` <span class="flag">(conf. ${c.confidence})</span>`:""}</td>
+      <td>${c.limit==null?"-":esc(c.limit)+" "+u}</td>
+      <td>${esc(c.message?.[lang]||"")}${c.reason?`<div class="flag">${esc(c.reason)}</div>`:""}${c.source?`<div class="flag">📄 ${esc(c.source)}</div>`:""}</td></tr>`;
+  }).join("");
+  return `<table><tr><th>${t("verdict")}</th><th>${t("observed")}</th><th>${t("limit")}</th><th>${t("notes")}</th></tr>${rows}</table>`;
+}
+
+function reviewsFor(ruleId){
+  return (currentRun.reviews||[]).filter(r=>r.rule_id===ruleId)
+    .map(r=>`<div class="flag">✍️ <b>${esc(r.reviewer)}</b> - ${t(r.decision)}${r.comment?` : «${esc(r.comment)}»`:""} <span class="trace">${r.timestamp||""} ${r.audit_hash?("#"+r.audit_hash.slice(0,10)):""}</span></div>`).join("");
+}
+
+function render(run){
+  const c = run.classification;
+  const html = `
+  <div class="card">
+    <div class="row">
+      <h2 style="margin:0;font-size:17px">${esc(run.application.id)} - ${esc(run.application.building_name)}</h2>
+      ${badge(run.overall)}
+    </div>
+    <div class="muted">${t("classified")} ${c.part}${c.nbc_3_2_2?` · ${esc(c.nbc_3_2_2)}`:""} - <b>${esc((c.subtype_label||{})[lang]||c.subtype||"")}</b> · ${esc(run.run_id)} · engine ${run.engine_version} / ruleset ${run.ruleset_version}
+      <span class="trace">${esc(run.input_hash.slice(0,30))}…</span></div>
+    ${run.submission_version?`<div class="muted">${t("version")} ${run.submission_version.version} · ${t("seal")} <span class="trace">#${esc(run.submission_version.seal.slice(0,16))}…</span>${run.submission_version.changes?` · ${t("changed")}: ${esc((run.submission_version.changes.modified||[]).join(", ")||"-")}`:""}</div>`:""}
+    <div class="summary">
+      ${Object.entries(run.summary).map(([k,v])=>`<div class="pill"><b>${v}</b>${badge(k)}</div>`).join("")}
+    </div>
+    <div class="exports" style="margin-top:12px">
+      <b>${t("exports")}</b>
+      <a href="/api/report/${run.run_id}?format=csv&lang=${lang}">CSV</a>
+      <a href="/api/report/${run.run_id}?format=html&lang=${lang}" target="_blank">HTML/PDF</a>
+      <a href="/api/report/${run.run_id}?format=json" target="_blank">JSON</a>
+      <a href="/api/report/${run.run_id}?format=bcf&lang=${lang}">BCF</a>
+    </div>
+  </div>
+  ${missingPanel(run)}
+  <div class="card">
+    ${run.results.map(r=>{
+      const open = r.applicable && r.verdict!=="MEETS" ? "open" : "";
+      const v = r.applicable ? badge(r.verdict) : `<span class="badge b-NA">${t("NA")}</span>`;
+      return `<details class="rule" ${open}>
+        <summary>${v}<div><b>${esc(r.title[lang])}</b> <span class="ref">${esc(r.reference)}</span></div></summary>
+        <div class="body">
+          <div class="muted">${esc(r.requirement_text[lang])}</div>
+          ${!r.applicable?`<div class="flag">${t("skipped")} ${esc(r.skip_reason||"")}</div>`:""}
+          ${(r.instances||[]).map(inst=>`<div style="margin-top:8px"><b>${esc(inst.element)}</b> ${badge(inst.verdict)}${checksTable(inst)}</div>`).join("")}
+          ${r.note?`<div class="flag">${t("noscope")}</div>`:""}
+          ${r.applicable?`
+          <div class="review">
+            <b style="font-size:13px">${t("review")}</b>
+            <div class="row" style="margin-top:6px">
+              <input placeholder="${t("reviewer")}" id="rev-name-${r.rule_id}" style="width:170px">
+              <select id="rev-dec-${r.rule_id}">
+                ${["APPROVED","OVERRIDDEN_MEETS","OVERRIDDEN_DOES_NOT_MEET","NEEDS_RESUBMISSION"].map(d=>`<option value="${d}">${t(d)}</option>`).join("")}
+              </select>
+              <input placeholder="${t("comment")}" id="rev-com-${r.rule_id}" style="flex:1;min-width:160px">
+              <button class="ghost" onclick="submitReview('${r.rule_id}')">${t("submit")}</button>
+            </div>
+            <div id="rev-log-${r.rule_id}">${reviewsFor(r.rule_id)}</div>
+          </div>`:""}
+        </div>
+      </details>`;
+    }).join("")}
+  </div>`;
+  document.getElementById("resultArea").innerHTML = html;
+}
+
+function missingPanel(run){
+  const mf = run.missing_fields || [];
+  if(!mf.length) return "";
+  const rows = mf.map((m,i)=>{
+    const unit = m.unit ? ` <span class="muted">(${esc(m.unit)})</span>` : "";
+    const lim = m.code_limit!=null ? `<span class="flag">${t("limit")}: ${esc(m.code_limit)} ${esc(m.unit||"")}</span>` : "";
+    return `<tr>
+      <td><b>${esc(m.element||"-")}</b><div class="flag">${esc(m.rule_id)} · ${esc(m.reference)}</div></td>
+      <td>${esc(m.prompt?.[lang]||m.field)}${unit}<div>${lim}</div></td>
+      <td><input id="mf-${i}" data-el="${esc(m.element||"")}" data-field="${esc(m.field)}"
+            style="width:130px" placeholder="value"></td></tr>`;
+  }).join("");
+  return `<div class="card" style="border-color:#e07b00">
+    <b>⚠ ${t("missing_title")} (${mf.length})</b>
+    <div class="muted" style="margin:4px 0 8px">${t("missing_hint")}</div>
+    <table><tr><th>${t("element")}</th><th>${t("notes")}</th><th></th></tr>${rows}</table>
+    <div class="row" style="margin-top:10px">
+      <input id="mf-name" placeholder="${t("yourname")}" style="width:180px">
+      <button class="primary" onclick="submitFill()">${t("fill_btn")}</button>
+    </div>
+  </div>`;
+}
+
+async function submitFill(){
+  const name = document.getElementById("mf-name").value.trim() || "manual";
+  const entries = [];
+  document.querySelectorAll("[id^='mf-']").forEach(el=>{
+    if(el.id==="mf-name" || !el.dataset.field) return;
+    const v = el.value.trim();
+    if(v==="") return;
+    let val = v;
+    if(/^-?\d+(\.\d+)?$/.test(v)) val = parseFloat(v);
+    else if(/^(true|yes|oui)$/i.test(v)) val = true;
+    else if(/^(false|no|non)$/i.test(v)) val = false;
+    entries.push({element: el.dataset.el || null, field: el.dataset.field, value: val});
+  });
+  if(!entries.length){ alert("Enter at least one value"); return; }
+  const res = await fetch("/api/fill",{method:"POST",headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({run_id: currentRun.run_id, entries, reviewer: name})});
+  const run = await res.json();
+  if(!res.ok){ alert(run.error); return; }
+  currentRun = run;
+  render(currentRun);
+  loadAudit();
+  refreshTriage();
+}
+
+async function submitReview(ruleId){
+  const name = document.getElementById("rev-name-"+ruleId).value.trim();
+  if(!name){ document.getElementById("rev-name-"+ruleId).focus(); return; }
+  const payload = {
+    run_id: currentRun.run_id, rule_id: ruleId, reviewer: name,
+    decision: document.getElementById("rev-dec-"+ruleId).value,
+    comment: document.getElementById("rev-com-"+ruleId).value
+  };
+  const res = await fetch("/api/review",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)});
+  const rev = await res.json();
+  if(res.ok){
+    currentRun.reviews.push(rev);
+    document.getElementById("rev-log-"+ruleId).innerHTML = reviewsFor(ruleId);
+    document.getElementById("rev-com-"+ruleId).value = "";
+    loadAudit();
+  } else alert(rev.error);
+}
+
+function _readAsDataURL(file){
+  return new Promise((res,rej)=>{ const r=new FileReader(); r.onload=()=>res(r.result); r.onerror=rej; r.readAsDataURL(file); });
+}
+async function uploadDocs(){
+  const input = document.getElementById("upFile");
+  const folder = (document.getElementById("upFolder").value.trim() || "uploaded");
+  if(!input.files.length){ document.getElementById("upStatus").textContent="choose file(s)"; return; }
+  document.getElementById("upStatus").textContent = t("uploading");
+  let done = 0;
+  for(const file of input.files){
+    const dataurl = await _readAsDataURL(file);
+    const res = await fetch("/api/upload",{method:"POST",headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({folder, filename:file.name, content_b64:dataurl})});
+    if(res.ok) done++;
+    else { const e=await res.json(); document.getElementById("upStatus").textContent=e.error; }
+  }
+  document.getElementById("upStatus").textContent = `${done}/${input.files.length} uploaded to '${folder}'`;
+  await loadAnnotatable();
+  document.getElementById("annFolder").value = folder;
+  loadAnnFiles();
+  // add the uploaded set to the permit list, select it, and run the check on it
+  await loadApps();
+  const sel = document.getElementById("appSelect");
+  sel.value = "set:" + folder;
+  // reset the file picker + button label now that these files are uploaded
+  document.getElementById("upFile").value = "";
+  document.querySelectorAll('[data-i18n="run"]').forEach(b=>{ b.textContent = t("run"); });
+  if(sel.value === "set:" + folder){
+    document.getElementById("status").textContent = t("checking");
+    await runCheck();
+  }
+}
+
+let annotatable = [];
+async function loadAnnotatable(){
+  try { annotatable = await (await fetch("/api/annotatable")).json(); }
+  catch(e){ return; }
+  const fsel = document.getElementById("annFolder");
+  fsel.innerHTML = annotatable.map(g=>`<option value="${esc(g.folder)}">${esc(g.folder)}</option>`).join("");
+  loadAnnFiles();
+}
+function loadAnnFiles(){
+  const folder = document.getElementById("annFolder").value;
+  const g = annotatable.find(x=>x.folder===folder);
+  document.getElementById("annFile").innerHTML =
+    (g? g.files : []).map(f=>`<option value="${esc(f)}">${esc(f)}</option>`).join("");
+}
+async function showAnnotated(){
+  const folder = document.getElementById("annFolder").value;
+  const file = document.getElementById("annFile").value;
+  if(!file) return;
+  document.getElementById("annStatus").textContent = t("rendering");
+  const url = `/api/annotate?folder=${encodeURIComponent(folder)}&file=${encodeURIComponent(file)}&_=${Date.now()}`;
+  const img = new Image();
+  img.style.width = "100%";
+  img.onload = ()=>{ document.getElementById("annStatus").textContent = ""; };
+  img.onerror = ()=>{ document.getElementById("annStatus").textContent = "render failed"; };
+  img.src = url;
+  const view = document.getElementById("annView");
+  view.innerHTML = "";
+  view.appendChild(img);
+}
+
+const DEFAULT_REVIEWERS = [
+  {name:"A. Roy (fire protection)", disciplines:["fire_safety"]},
+  {name:"J. Singh (architectural)", disciplines:["architectural","administrative"]}
+];
+
+// Operations-research optimization runs silently in the background after a
+// check. The user only sees the resulting plain-language review plan; the
+// Hungarian assignment + WSPT scheduling are internal.
+async function refreshTriage(){
+  const card = document.getElementById("triageCard");
+  if(!currentRun){ card.style.display = "none"; return; }
+  let plan;
+  try {
+    const res = await fetch("/api/triage",{method:"POST",headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({reviewers: DEFAULT_REVIEWERS, run_ids:[currentRun.run_id]})});
+    if(!res.ok){ card.style.display = "none"; return; }
+    plan = await res.json();
+  } catch(e){ card.style.display = "none"; return; }
+
+  const a = plan.assignment, q = plan.queue;
+  if(!plan.findings_count){ card.style.display = "none"; return; }
+  card.style.display = "";
+
+  let html = `<div class="muted" style="margin-bottom:8px">${plan.findings_count} ${t("findings")} · ~${a.total_minutes} ${t("minutes")} total`;
+  if(q && q.improvement_pct > 0) html += ` · ${q.improvement_pct}% ${t("vs_fifo")}`;
+  html += `</div>`;
+  html += `<h3 style="font-size:14px;margin:8px 0 4px">${t("assignment")}</h3>`;
+  for(const [name, items] of Object.entries(a.assignments)){
+    if(!items.length) continue;
+    html += `<div style="margin:6px 0"><b style="font-size:13px">${esc(name)}</b> `
+         + `<span class="muted">${items.length} ${t("findings")}, ~${items.reduce((s,f)=>s+f.assigned_cost_minutes,0)} ${t("minutes")}</span></div>`;
+    html += `<table><tr><th>${t("verdict")}</th><th>Rule</th><th>${t("element")}</th><th>${t("minutes")}</th></tr>` +
+      items.map(f=>`<tr><td>${badge(f.verdict)}</td><td>${esc(f.rule_id)}</td>
+        <td>${esc((f.elements||[]).join(", "))}${f.discipline_match ? "" : ` <span class="flag">${t("mismatch")}</span>`}</td>
+        <td>${f.assigned_cost_minutes}</td></tr>`).join("") + "</table>";
+  }
+  document.getElementById("triageBody").innerHTML = html;
+}
+
+async function loadAudit(){
+  let data;
+  try { data = await (await fetch("/api/audit")).json(); }
+  catch(e){ document.getElementById("auditStatus").textContent = t("offline"); return; }
+  const ok = data.verification.valid;
+  document.getElementById("auditStatus").textContent =
+    (ok? t("chain_ok") : t("chain_bad")) + ` (${data.entries.length})`;
+  document.getElementById("auditBody").innerHTML = data.entries.slice(-40).reverse().map(e=>
+    `<div>${e.timestamp} · <b>${e.event}</b> · ${esc(e.actor)} · ${e.payload.run_id||""} ${e.payload.rule_id||""} ${e.payload.decision||e.payload.overall||""} · #${e.hash.slice(0,12)}</div>`).join("");
+}
+
+setLang("en");
+loadApps();
+loadAudit();
+loadAnnotatable();
+</script>
+</body>
+</html>
